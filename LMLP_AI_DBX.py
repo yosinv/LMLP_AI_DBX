@@ -24,7 +24,9 @@ os.environ["DATABRICKS_TOKEN"] = w.tokens.create(comment="for model serving", li
 llm = ChatDatabricks(endpoint="databricks-meta-llama-3-3-70b-instruct")
 
 # Setup MCP client
-NIMBLE_API_KEY = '70cfe596186e4383862076cbb11eeaafc16b2d5d2f9d40c2a83af5a3fa8857ab'
+NIMBLE_API_KEY = os.environ.get('NIMBLE_API_KEY')
+if not NIMBLE_API_KEY:
+    raise RuntimeError('NIMBLE_API_KEY is required; configure it as a secret or environment variable')
 client = MultiServerMCPClient({
     "nimble": {
         "url": "https://mcp.nimbleway.com/sse",
