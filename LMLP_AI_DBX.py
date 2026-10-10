@@ -24,7 +24,7 @@ os.environ["DATABRICKS_TOKEN"] = w.tokens.create(comment="for model serving", li
 llm = ChatDatabricks(endpoint="databricks-meta-llama-3-3-70b-instruct")
 
 # Setup MCP client
-NIMBLE_API_KEY = '70cfe596186e4383862076cbb11eeaafc16b2d5d2f9d40c2a83af5a3fa8857ab'
+NIMBLE_API_KEY = os.environ["NIMBLE_API_KEY"]  # set in .env, never commit
 client = MultiServerMCPClient({
     "nimble": {
         "url": "https://mcp.nimbleway.com/sse",
@@ -50,7 +50,7 @@ def find_accessible_airbnb_properties(location: str) -> pd.DataFrame:
         reviews
         FROM `aidsf`.bright_initiative.airbnb_properties_information_csv
         WHERE 1=1
-        AND location ILIKE '%{location}%'
+        AND location ILIKE :location_pattern
         AND host_number_of_reviews > 100
         AND EXISTS(
             FROM_JSON(reviews, 'array<struct<review:string>>'),
@@ -58,7 +58,7 @@ def find_accessible_airbnb_properties(location: str) -> pd.DataFrame:
         )
         LIMIT 50
     """
-    return spark.sql(query).toPandas()
+    return spark.sql(query, args={"location_pattern": f"%{location}%"}).toPandas()
 
 def find_accessible_hotels_properties(location: str) -> pd.DataFrame:
     """
@@ -76,7 +76,7 @@ def find_accessible_hotels_properties(location: str) -> pd.DataFrame:
         top_reviews
         FROM `aidsf`.bright_initiative.booking_hotel_listings_csv
         WHERE 1=1
-        AND location ILIKE '%{location}%'
+        AND location ILIKE :location_pattern
         AND number_of_reviews > 100
         AND EXISTS(
             FROM_JSON(top_reviews, 'array<struct<review:string>>'),
@@ -84,7 +84,7 @@ def find_accessible_hotels_properties(location: str) -> pd.DataFrame:
         )
         LIMIT 50
     """
-    return spark.sql(query).toPandas()
+    return spark.sql(query, args={"location_pattern": f"%{location}%"}).toPandas()
 
 async def add_google_maps_links(properties_data: dict) -> dict:
     """
